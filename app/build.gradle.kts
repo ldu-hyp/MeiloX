@@ -15,7 +15,7 @@ plugins {
 
 android {
     namespace = "com.ljyh.mei"
-    compileSdk = 37
+    compileSdk = 36
     ndkVersion = "27.1.12297006"
     useLibrary("android.test.mock")
     testBuildType = providers.gradleProperty("mei.instrumentationBuildType").orElse("debug").get()
@@ -24,7 +24,7 @@ android {
             .orElse("com.neoruaa.meilox")
             .get()
         minSdk = 33
-        targetSdk = 37
+        targetSdk = 36
         versionCode = 11
         versionName = "1.54.6"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
