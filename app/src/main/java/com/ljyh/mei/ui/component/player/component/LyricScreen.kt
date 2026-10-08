@@ -1,6 +1,7 @@
 package com.ljyh.mei.ui.component.player.component
 
 
+import android.content.res.Configuration
 import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.compose.animation.core.Animatable
@@ -94,6 +95,8 @@ fun LyricScreen(
     onToggleControls: (Boolean) -> Unit
 ) {
     val context = LocalContext.current
+    // The lyric source badge is intentionally available only in portrait playback.
+    val showSourceBadge = LocalConfiguration.current.orientation != Configuration.ORIENTATION_LANDSCAPE
     val (normalLyricTextSize, _) = rememberEnumPreference(
         NormalLyricTextSizeKey,
         LyricTextSize.Size28
@@ -145,7 +148,7 @@ fun LyricScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .pointerInput(controlsVisible, onToggleControls) {
+                .pointerInput(controlsVisible, onToggleControls, showSourceBadge) {
                     val badgeSlop = 12.dp.toPx()
                     awaitEachGesture {
                         val down = awaitFirstDown(
@@ -153,7 +156,8 @@ fun LyricScreen(
                             pass = PointerEventPass.Initial,
                         )
                         val lowerHalf = down.position.y >= size.height / 2f
-                        val inBadge = badgeBounds?.inflate(badgeSlop)?.contains(down.position) == true
+                        val inBadge = showSourceBadge &&
+                            badgeBounds?.inflate(badgeSlop)?.contains(down.position) == true
                         var moved = false
                         var released = false
                         var pressed = true
@@ -307,15 +311,17 @@ fun LyricScreen(
                     }
                 }
 
-                LyricSourceBadge(
-                    source = lyricData.source,
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding( bottom = 8.dp)
-                        .onGloballyPositioned { badgeBounds = it.boundsInParent() },
-                    onClick = onClick,
-                    onLongClick = onLongClick
-                )
+                if (showSourceBadge) {
+                    LyricSourceBadge(
+                        source = lyricData.source,
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(bottom = 8.dp)
+                            .onGloballyPositioned { badgeBounds = it.boundsInParent() },
+                        onClick = onClick,
+                        onLongClick = onLongClick
+                    )
+                }
             }
         }
     }
