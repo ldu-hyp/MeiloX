@@ -15,7 +15,8 @@ plugins {
 
 android {
     namespace = "com.ljyh.mei"
-    compileSdk = 36
+    compileSdk = 37
+    compileSdkMinor = 0
     ndkVersion = "27.1.12297006"
     useLibrary("android.test.mock")
     testBuildType = providers.gradleProperty("mei.instrumentationBuildType").orElse("debug").get()
