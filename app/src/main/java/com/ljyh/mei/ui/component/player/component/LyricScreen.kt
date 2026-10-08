@@ -29,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -186,19 +187,6 @@ fun LyricScreen(
                     }
                 }
         ) {
-            // KaraokeLyricsView positions its active line using its vertical offset.
-            // Center mode uses the actual lyric viewport height, not the device height.
-            // Portrait and the default top-aligned behavior remain unchanged.
-            val focusedLineOffset = if (isLandscape &&
-                landscapePosition == LandscapeLyricPosition.Center
-            ) {
-                val halfLineHeight = with(LocalDensity.current) {
-                    normalLyricTextSize.text.sp.toDp() / 2
-                }
-                (maxHeight / 2 - halfLineHeight).coerceAtLeast(0.dp)
-            } else {
-                48.dp
-            }
             if (lyricData.lyricLine.lines.isNotEmpty()) {
                 key(System.identityHashCode(lyricData.lyricLine)) {
                     val player = playerConnection.player
@@ -212,6 +200,47 @@ fun LyricScreen(
                     var animatedPosition by remember(player) { mutableLongStateOf(0L) }
                     var placementGeneration by remember(player) { mutableIntStateOf(0) }
                     val lyricAlpha = remember(player) { Animatable(0f) }
+                    // Store the actual measured heights of rendered lyric items. This
+                    // includes wraps, translated text and any per-line layout padding.
+                    // Keep measurements by line index so an upcoming line can be
+                    // centered even before it scrolls fully into the viewport.
+                    val measuredLineHeights = remember(lines) { mutableStateMapOf<Int, Int>() }
+                    LaunchedEffect(listState, lines) {
+                        snapshotFlow {
+                            listState.layoutInfo.visibleItemsInfo.map { it.index to it.size }
+                        }.collect { measuredItems ->
+                            measuredItems.forEach { (index, heightPx) ->
+                                if (heightPx > 0 && measuredLineHeights[index] != heightPx) {
+                                    measuredLineHeights[index] = heightPx
+                                }
+                            }
+                        }
+                    }
+
+                    val focusedLineOffset = if (
+                        isLandscape && landscapePosition == LandscapeLyricPosition.Center
+                    ) {
+                        val currentIndex = lyricFocusLineIndex(lines, animatedPosition.toInt())
+                        val visibleItemHeightPx = listState.layoutInfo.visibleItemsInfo
+                            .firstOrNull { it.index == currentIndex }?.size
+                        val actualItemHeightPx = visibleItemHeightPx?.takeIf { it > 0 }
+                            ?: measuredLineHeights[currentIndex]
+                        val actualItemHeight = actualItemHeightPx?.let { heightPx ->
+                            with(LocalDensity.current) { heightPx.toDp() }
+                        } ?: with(LocalDensity.current) {
+                            // A short fallback applies only until the first measurement.
+                            normalLyricTextSize.text.sp.toDp()
+                        }
+                        // KaraokeLyricsView is inset by 8.dp at each edge.
+                        // Its offset targets the TOP of the active lyric item, so
+                        // subtract HALF the actual rendered item's height to center
+                        // the whole lyric block rather than its first text baseline.
+                        ((maxHeight - 16.dp - actualItemHeight) / 2).coerceAtLeast(0.dp)
+                    } else {
+                        // Original appearance in portrait or landscape "near top".
+                        48.dp
+                    }
+
                     LaunchedEffect(player, keepAliveZonePx) {
                         // Measure the actual viewport before deciding whether entry may animate.
                         snapshotFlow { listState.layoutInfo.visibleItemsInfo.isNotEmpty() }
