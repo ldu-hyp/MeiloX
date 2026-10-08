@@ -23,9 +23,6 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: Install Android SDK tools
-        uses: android-actions/setup-android@v3
-
       - name: Install Android SDK 37 and native toolchain
         run: |
           yes | sdkmanager --licenses > /dev/null || true
