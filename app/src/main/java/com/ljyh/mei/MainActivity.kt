@@ -78,6 +78,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
@@ -92,6 +93,7 @@ import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.zIndex
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.Preferences
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.lifecycleScope
@@ -639,6 +641,29 @@ class MainActivity : ComponentActivity() {
                     }
                     val pageDarkAppearance = currentRoute?.let { pageAppearanceOverrides[it]?.second }
                     val statusBarDark = isPlayerPage || (pageDarkAppearance ?: effectiveDark)
+
+                    // Hide both system bars while the landscape player is expanded.
+                    // Other screens, portrait playback, and PiP keep their system bars.
+                    val immersiveLandscapePlayer =
+                        isPlayerPage &&
+                            LocalConfiguration.current.orientation ==
+                                Configuration.ORIENTATION_LANDSCAPE &&
+                            !pictureInPictureMode
+
+                    DisposableEffect(windowInsetsController, immersiveLandscapePlayer) {
+                        val previousBehavior = windowInsetsController.systemBarsBehavior
+                        if (immersiveLandscapePlayer) {
+                            windowInsetsController.systemBarsBehavior =
+                                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                            windowInsetsController.hide(WindowInsetsCompat.Type.systemBars())
+                        }
+                        onDispose {
+                            if (immersiveLandscapePlayer) {
+                                windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
+                                windowInsetsController.systemBarsBehavior = previousBehavior
+                            }
+                        }
+                    }
                     SideEffect {
                         val transparent = android.graphics.Color.TRANSPARENT
                         enableEdgeToEdge(
