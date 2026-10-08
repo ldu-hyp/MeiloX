@@ -394,9 +394,9 @@
     <string name="cloud_upload_progress">正在上传 · %1$d%%</string>
     <string name="lyrics_settings">歌词</string>
     <string name="lyrics_landscape_position_group">横屏歌词</string>
-    <string name="lyrics_landscape_position_label">当前歌词位置</string>
-    <string name="lyrics_landscape_position_top">靠上</string>
-    <string name="lyrics_landscape_position_center">垂直居中</string>
+    <string name="lyrics_landscape_offset_label">当前歌词偏移量</string>
+    <string name="lyrics_landscape_offset_reset">恢复 48 dp</string>
+    <string name="lyrics_landscape_offset_hint">数值越大，当前歌词的位置越靠下。默认 48 dp，仅横屏生效。</string>
     <string name="lyrics_visual_style">视觉样式</string>
     <string name="lyrics_style_presentation">呈现方案</string>
     <string name="lyrics_style_apple">Apple</string>

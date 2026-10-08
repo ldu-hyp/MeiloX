@@ -14,7 +14,6 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,7 +28,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -66,8 +64,7 @@ import com.ljyh.mei.R
 import com.ljyh.mei.constants.AccompanimentLyricTextBoldKey
 import com.ljyh.mei.constants.AccompanimentLyricTextSizeKey
 import com.ljyh.mei.constants.LyricTextSize
-import com.ljyh.mei.constants.LandscapeLyricPosition
-import com.ljyh.mei.constants.LandscapeLyricPositionKey
+import com.ljyh.mei.constants.LandscapeLyricOffsetDpKey
 import com.ljyh.mei.constants.NormalLyricTextBoldKey
 import com.ljyh.mei.constants.NormalLyricTextSizeKey
 import com.ljyh.mei.playback.PlayerConnection
@@ -83,7 +80,6 @@ import com.mocharealm.accompanist.lyrics.ui.composable.lyrics.KaraokeLyricsView
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -103,9 +99,7 @@ fun LyricScreen(
     // The lyric source badge is intentionally available only in portrait playback.
     val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     val showSourceBadge = !isLandscape
-    val (landscapePosition, _) = rememberEnumPreference(
-        LandscapeLyricPositionKey, LandscapeLyricPosition.Top
-    )
+    val (landscapeOffsetDp, _) = rememberPreference(LandscapeLyricOffsetDpKey, 48)
     val (normalLyricTextSize, _) = rememberEnumPreference(
         NormalLyricTextSizeKey,
         LyricTextSize.Size28
@@ -153,7 +147,7 @@ fun LyricScreen(
         // lower-half tap-to-toggle gesture runs on the Initial pass and consumes taps
         // before children see them, so the badge region must be excluded explicitly.
         var badgeBounds by remember { mutableStateOf<Rect?>(null) }
-        BoxWithConstraints(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
@@ -201,46 +195,13 @@ fun LyricScreen(
                     var animatedPosition by remember(player) { mutableLongStateOf(0L) }
                     var placementGeneration by remember(player) { mutableIntStateOf(0) }
                     val lyricAlpha = remember(player) { Animatable(0f) }
-                    // Store the actual measured heights of rendered lyric items. This
-                    // includes wraps, translated text and any per-line layout padding.
-                    // Keep measurements by line index so an upcoming line can be
-                    // centered even before it scrolls fully into the viewport.
-                    val measuredLineHeights = remember(lines) { mutableStateMapOf<Int, Int>() }
-                    LaunchedEffect(listState, lines) {
-                        snapshotFlow {
-                            listState.layoutInfo.visibleItemsInfo.map { it.index to it.size }
-                        }.collect { measuredItems ->
-                            measuredItems.forEach { (index, heightPx) ->
-                                if (heightPx > 0 && measuredLineHeights[index] != heightPx) {
-                                    measuredLineHeights[index] = heightPx
-                                }
-                            }
-                        }
-                    }
-
-                    val focusedLineOffset = if (
-                        isLandscape && landscapePosition == LandscapeLyricPosition.Center
-                    ) {
-                        val currentIndex = lyricFocusLineIndex(lines, animatedPosition.toInt())
-                        val visibleItemHeightPx = listState.layoutInfo.visibleItemsInfo
-                            .firstOrNull { it.index == currentIndex }?.size
-                        val actualItemHeightPx = visibleItemHeightPx?.takeIf { it > 0 }
-                            ?: measuredLineHeights[currentIndex]
-                        val actualItemHeight = actualItemHeightPx?.let { heightPx ->
-                            with(LocalDensity.current) { heightPx.toDp() }
-                        } ?: with(LocalDensity.current) {
-                            // A short fallback applies only until the first measurement.
-                            normalLyricTextSize.text.sp.toDp()
-                        }
-                        // KaraokeLyricsView is inset by 8.dp at each edge.
-                        // Its offset targets the TOP of the active lyric item, so
-                        // subtract HALF the actual rendered item's height to center
-                        // the whole lyric block rather than its first text baseline.
-                        ((maxHeight - 16.dp - actualItemHeight) / 2).coerceAtLeast(0.dp)
+                    // Fixed, user-adjustable landscape offset; portrait keeps original 48.dp.
+                    // No lyric-height or viewport-height calculations are performed.
+                    val focusedLineOffset = (if (isLandscape) {
+                        landscapeOffsetDp.coerceIn(0, 400)
                     } else {
-                        // Original appearance in portrait or landscape "near top".
-                        48.dp
-                    }
+                        48
+                    }).dp
 
                     LaunchedEffect(player, keepAliveZonePx) {
                         // Measure the actual viewport before deciding whether entry may animate.

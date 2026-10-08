@@ -26,11 +26,11 @@ import com.ljyh.mei.constants.LyricRomanizationEnabledKey
 import com.ljyh.mei.constants.LyricTranslationEnabledKey
 import com.ljyh.mei.constants.LyricVisualStyle
 import com.ljyh.mei.constants.LyricVisualStyleKey
-import com.ljyh.mei.constants.LandscapeLyricPosition
-import com.ljyh.mei.constants.LandscapeLyricPositionKey
+import com.ljyh.mei.constants.LandscapeLyricOffsetDpKey
 import com.ljyh.mei.constants.FloatingLyricsTranslationKey
 import com.ljyh.mei.constants.FloatingLyricsNextLineKey
 import com.ljyh.mei.constants.FloatingLyricsFontScaleKey
+import com.ljyh.mei.ui.glass.GlassButton
 import com.ljyh.mei.ui.glass.GlassCard
 import com.ljyh.mei.ui.glass.GlassIconButton
 import com.ljyh.mei.ui.glass.GlassToggle
@@ -43,15 +43,14 @@ import com.ljyh.mei.ui.local.LocalNavController
 import com.ljyh.mei.ui.local.LocalPlayerAwareWindowInsets
 import com.ljyh.mei.utils.rememberEnumPreference
 import com.ljyh.mei.utils.rememberPreference
+import kotlin.math.roundToInt
 
 @Composable
 fun LyricsSettings() {
     val navController = LocalNavController.current
     val insets = LocalPlayerAwareWindowInsets.current.asPaddingValues()
     val (style, onStyle) = rememberEnumPreference(LyricVisualStyleKey, LyricVisualStyle.AppleMusic)
-    val (landscapePosition, onLandscapePosition) = rememberEnumPreference(
-        LandscapeLyricPositionKey, LandscapeLyricPosition.Top
-    )
+    val (landscapeOffsetDp, onLandscapeOffsetDp) = rememberPreference(LandscapeLyricOffsetDpKey, 48)
     val (translation, onTranslation) = rememberPreference(LyricTranslationEnabledKey, true)
     val (romanization, onRomanization) = rememberPreference(LyricRomanizationEnabledKey, true)
     val (glow, onGlow) = rememberPreference(LyricGlowEnabledKey, true)
@@ -92,26 +91,48 @@ fun LyricsSettings() {
         item {
             SettingsGroup(stringResource(R.string.lyrics_landscape_position_group)) {
                 GlassCard(Modifier.fillMaxWidth()) {
-                    Row(
-                        Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            stringResource(R.string.lyrics_landscape_position_label),
-                            modifier = Modifier.weight(1f),
-                        )
-                        IosPopupButton(
-                            selected = landscapePosition,
-                            items = LandscapeLyricPosition.entries,
-                            onSelected = onLandscapePosition,
-                            label = {
-                                stringResource(
-                                    when (it) {
-                                        LandscapeLyricPosition.Top -> R.string.lyrics_landscape_position_top
-                                        LandscapeLyricPosition.Center -> R.string.lyrics_landscape_position_center
-                                    }
-                                )
+                    Column(Modifier.fillMaxWidth().padding(14.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                stringResource(R.string.lyrics_landscape_offset_label),
+                                modifier = Modifier.weight(1f),
+                            )
+                            Text(
+                                "$landscapeOffsetDp dp",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        GlassSlider(
+                            value = landscapeOffsetDp.coerceIn(0, 400).toFloat(),
+                            onValueChange = {
+                                onLandscapeOffsetDp(it.roundToInt().coerceIn(0, 400))
                             },
+                            modifier = Modifier.fillMaxWidth(),
+                            valueRange = 0f..400f,
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            GlassButton(
+                                onClick = {
+                                    onLandscapeOffsetDp((landscapeOffsetDp - 1).coerceAtLeast(0))
+                                },
+                            ) { Text("−1") }
+                            GlassButton(
+                                onClick = {
+                                    onLandscapeOffsetDp((landscapeOffsetDp + 1).coerceAtMost(400))
+                                },
+                            ) { Text("+1") }
+                            GlassButton(onClick = { onLandscapeOffsetDp(48) }) {
+                                Text(stringResource(R.string.lyrics_landscape_offset_reset))
+                            }
+                        }
+                        Text(
+                            stringResource(R.string.lyrics_landscape_offset_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }

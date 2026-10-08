@@ -24,7 +24,7 @@ val UserAvatarUrlKey = stringPreferencesKey("userAvatarUrl")
 val UserPhotoKey = stringPreferencesKey("userPhoto")
 val ShowLyricsKey = booleanPreferencesKey("showLyrics")
 val LyricVisualStyleKey = stringPreferencesKey("lyrics.visualStyle")
-val LandscapeLyricPositionKey = stringPreferencesKey("lyrics.landscapeCurrentLinePosition")
+val LandscapeLyricOffsetDpKey = intPreferencesKey("lyrics.landscapeOffsetDp")
 val LyricTranslationEnabledKey = booleanPreferencesKey("lyrics.translationEnabled")
 val LyricRomanizationEnabledKey = booleanPreferencesKey("lyrics.romanizationEnabled")
 val LyricGlowEnabledKey = booleanPreferencesKey("lyrics.glowEnabled")
@@ -173,7 +173,6 @@ enum class LyricTextAlignment {
 }
 
 enum class LyricVisualStyle { AppleMusic, EVA, TextPV, Skyline }
-enum class LandscapeLyricPosition { Top, Center }
 
 
 // standard, exhigh, lossless, hires, jyeffect(高清环绕声), sky(沉浸环绕声), jymaster(超清母带) 进行音质判断

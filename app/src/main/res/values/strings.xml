@@ -395,9 +395,9 @@
     <string name="cloud_upload_progress">Uploading · %1$d%%</string>
     <string name="lyrics_settings">Lyrics</string>
     <string name="lyrics_landscape_position_group">Landscape lyrics</string>
-    <string name="lyrics_landscape_position_label">Current line position</string>
-    <string name="lyrics_landscape_position_top">Near top</string>
-    <string name="lyrics_landscape_position_center">Vertically centered</string>
+    <string name="lyrics_landscape_offset_label">Current line offset</string>
+    <string name="lyrics_landscape_offset_reset">Reset to 48 dp</string>
+    <string name="lyrics_landscape_offset_hint">Higher values place the active lyric lower. Default: 48 dp. Landscape only.</string>
     <string name="lyrics_visual_style">Visual Style</string>
     <string name="lyrics_style_presentation">Presentation</string>
     <string name="lyrics_style_apple">Apple</string>
