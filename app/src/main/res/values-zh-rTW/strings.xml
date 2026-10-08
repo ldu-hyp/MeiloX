@@ -393,6 +393,10 @@
     <string name="cloud_upload">上傳</string>
     <string name="cloud_upload_progress">正在上傳 · %1$d%%</string>
     <string name="lyrics_settings">歌詞</string>
+    <string name="lyrics_landscape_position_group">橫屏歌詞</string>
+    <string name="lyrics_landscape_position_label">目前歌詞位置</string>
+    <string name="lyrics_landscape_position_top">靠上</string>
+    <string name="lyrics_landscape_position_center">垂直置中</string>
     <string name="lyrics_visual_style">視覺樣式</string>
     <string name="lyrics_style_presentation">呈現方案</string>
     <string name="lyrics_style_apple">Apple</string>

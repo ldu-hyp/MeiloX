@@ -14,6 +14,7 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -64,6 +65,8 @@ import com.ljyh.mei.R
 import com.ljyh.mei.constants.AccompanimentLyricTextBoldKey
 import com.ljyh.mei.constants.AccompanimentLyricTextSizeKey
 import com.ljyh.mei.constants.LyricTextSize
+import com.ljyh.mei.constants.LandscapeLyricPosition
+import com.ljyh.mei.constants.LandscapeLyricPositionKey
 import com.ljyh.mei.constants.NormalLyricTextBoldKey
 import com.ljyh.mei.constants.NormalLyricTextSizeKey
 import com.ljyh.mei.playback.PlayerConnection
@@ -96,7 +99,11 @@ fun LyricScreen(
 ) {
     val context = LocalContext.current
     // The lyric source badge is intentionally available only in portrait playback.
-    val showSourceBadge = LocalConfiguration.current.orientation != Configuration.ORIENTATION_LANDSCAPE
+    val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val showSourceBadge = !isLandscape
+    val (landscapePosition, _) = rememberEnumPreference(
+        LandscapeLyricPositionKey, LandscapeLyricPosition.Top
+    )
     val (normalLyricTextSize, _) = rememberEnumPreference(
         NormalLyricTextSizeKey,
         LyricTextSize.Size28
@@ -144,7 +151,7 @@ fun LyricScreen(
         // lower-half tap-to-toggle gesture runs on the Initial pass and consumes taps
         // before children see them, so the badge region must be excluded explicitly.
         var badgeBounds by remember { mutableStateOf<Rect?>(null) }
-        Box(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
@@ -179,6 +186,19 @@ fun LyricScreen(
                     }
                 }
         ) {
+            // KaraokeLyricsView positions its active line using its vertical offset.
+            // Center mode uses the actual lyric viewport height, not the device height.
+            // Portrait and the default top-aligned behavior remain unchanged.
+            val focusedLineOffset = if (isLandscape &&
+                landscapePosition == LandscapeLyricPosition.Center
+            ) {
+                val halfLineHeight = with(LocalDensity.current) {
+                    normalLyricTextSize.text.sp.toDp() / 2
+                }
+                (maxHeight / 2 - halfLineHeight).coerceAtLeast(0.dp)
+            } else {
+                48.dp
+            }
             if (lyricData.lyricLine.lines.isNotEmpty()) {
                 key(System.identityHashCode(lyricData.lyricLine)) {
                     val player = playerConnection.player
@@ -305,7 +325,7 @@ fun LyricScreen(
                                 fontWeight = if (accompanimentLyricTextBold) FontWeight.Bold else FontWeight.Normal,
                                 textMotion = TextMotion.Animated,
                             ),
-                            offset = 48.dp,
+                            offset = focusedLineOffset,
                             keepAliveZone = keepAliveZone,
                         )
                     }

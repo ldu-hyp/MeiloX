@@ -26,6 +26,8 @@ import com.ljyh.mei.constants.LyricRomanizationEnabledKey
 import com.ljyh.mei.constants.LyricTranslationEnabledKey
 import com.ljyh.mei.constants.LyricVisualStyle
 import com.ljyh.mei.constants.LyricVisualStyleKey
+import com.ljyh.mei.constants.LandscapeLyricPosition
+import com.ljyh.mei.constants.LandscapeLyricPositionKey
 import com.ljyh.mei.constants.FloatingLyricsTranslationKey
 import com.ljyh.mei.constants.FloatingLyricsNextLineKey
 import com.ljyh.mei.constants.FloatingLyricsFontScaleKey
@@ -47,6 +49,9 @@ fun LyricsSettings() {
     val navController = LocalNavController.current
     val insets = LocalPlayerAwareWindowInsets.current.asPaddingValues()
     val (style, onStyle) = rememberEnumPreference(LyricVisualStyleKey, LyricVisualStyle.AppleMusic)
+    val (landscapePosition, onLandscapePosition) = rememberEnumPreference(
+        LandscapeLyricPositionKey, LandscapeLyricPosition.Top
+    )
     val (translation, onTranslation) = rememberPreference(LyricTranslationEnabledKey, true)
     val (romanization, onRomanization) = rememberPreference(LyricRomanizationEnabledKey, true)
     val (glow, onGlow) = rememberPreference(LyricGlowEnabledKey, true)
@@ -79,6 +84,34 @@ fun LyricsSettings() {
                             items = LyricVisualStyle.entries,
                             onSelected = onStyle,
                             label = { lyricStyleLabel(it) },
+                        )
+                    }
+                }
+            }
+        }
+        item {
+            SettingsGroup(stringResource(R.string.lyrics_landscape_position_group)) {
+                GlassCard(Modifier.fillMaxWidth()) {
+                    Row(
+                        Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            stringResource(R.string.lyrics_landscape_position_label),
+                            modifier = Modifier.weight(1f),
+                        )
+                        IosPopupButton(
+                            selected = landscapePosition,
+                            items = LandscapeLyricPosition.entries,
+                            onSelected = onLandscapePosition,
+                            label = {
+                                stringResource(
+                                    when (it) {
+                                        LandscapeLyricPosition.Top -> R.string.lyrics_landscape_position_top
+                                        LandscapeLyricPosition.Center -> R.string.lyrics_landscape_position_center
+                                    }
+                                )
+                            },
                         )
                     }
                 }
